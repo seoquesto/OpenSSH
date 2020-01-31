@@ -24,11 +24,25 @@ Write-Host 'OpenSSH location to the PATH environment variable'
 $env:Path="$env:Path;C:\Program Files\OpenSSH-Win64\"
 Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $env:Path
 
-Write-Host 'Start OpenSSH Service'
-Start-Service sshd
-
 Write-Host 'Change OpenSSH service startup type'
 Set-Service sshd -StartupType Automatic
+
+Write-Host 'Start OpenSSH Service'
+$Counter = 0
+$Attempts = 10
+
+while($Counter -lt $Attempts)
+{
+    if((Get-Service -Name sshd).Status -eq 'Running')
+    {
+        break;
+    }
+    $Counter+=1
+    Write-Host -ForegroundColor Yellow `
+        "Starting sshd service. $Counter of $Attempts attempts."
+    Start-Service sshd
+    Start-Sleep 20
+}
 
 Write-Host 'Change OpenSSH Service configuration'
 ((Get-Content -path C:\ProgramData\ssh\sshd_config -Raw) `
